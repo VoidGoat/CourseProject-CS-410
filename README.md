@@ -1,3 +1,5 @@
-# CourseProject
+# Course Project (kahaas)
 
-Please fork this repository and paste the github link of your fork on Microsoft CMT. Detailed instructions are on Coursera under Week 1: Course Project Overview/Week 9 Activities.
+This final project is to create a Firefox browser extension that allows for a more flexible way to search for content in webpages.
+
+The proposal is in ProjectProposal.pdf
