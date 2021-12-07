@@ -2,19 +2,17 @@ function listenForClicks() {
   document.addEventListener("click", (e) => {
 
     console.log("CLICKED!");
-    console.log(e.target.id);
-    console.log(document.getElementById("search-bar").innerHTML)
+    console.log("e.target.id" + e.target.id);
+    console.log(document.getElementById("search-bar"));
+    console.log("search bar text:" + document.getElementById("search-bar").value)
 
     /**
-     * Insert the page-hiding CSS into the active tab,
-     * then get the beast URL and
-     * send a "beastify" message to the content script in the active tab.
      */
-    function beastify(tabs) {
+    function sendFindRequest(tabs) {
 
         browser.tabs.sendMessage(tabs[0].id, {
           command: "find",
-          findQuery: document.getElementById("search-bar").innerHTML
+          findQuery: document.getElementById("search-bar").value
         }).then(() => {
           console.log("query complete");
         });
@@ -25,10 +23,8 @@ function listenForClicks() {
      * send a "reset" message to the content script in the active tab.
      */
     function reset(tabs) {
-      browser.tabs.removeCSS({code: hidePage}).then(() => {
-        browser.tabs.sendMessage(tabs[0].id, {
-          command: "reset",
-        });
+      browser.tabs.sendMessage(tabs[0].id, {
+        command: "reset",
       });
     }
 
@@ -41,22 +37,56 @@ function listenForClicks() {
 
     /**
      * Get the active tab,
-     * then call "beastify()" or "reset()" as appropriate.
+     * then call "sendFindRequest()" or "reset()" as appropriate.
      */
     if (e.target.id === "search-button") {
       browser.tabs.query({active: true, currentWindow: true})
-        .then(beastify)
+        .then(sendFindRequest)
         .catch(reportError);
     }
-    // else if (e.target.id === "search-button") {
-    //   browser.tabs.query({active: true, currentWindow: true})
-    //     .then(reset)
-    //     .catch(reportError);
-    // }
+    // Clear results if clear button pressed
+    else if (e.target.id === "clear-button") {
+      browser.tabs.query({active: true, currentWindow: true})
+        .then(reset)
+        .catch(reportError);
+    }
 
+    else if (e.target.classList.contains("focus-button")) {
+      console.log("FOCUS BUTTON!" + e.target.value);
+      browser.tabs.query({active: true, currentWindow: true})
+        .then((tabs) => focusOnResult(tabs, e.target.value))
+        .catch(reportError);
+    }
+
+  });
+
+  browser.runtime.onMessage.addListener((message) => {
+    console.log("NEW MESSAGE!")
+
+    if (message.command === "receive-results") {
+      console.log(message.results);
+      const resultsEl = document.getElementById("results");
+
+      // Add all results to section
+      message.results.forEach(element => {
+        const resultEntry = document.createElement("button");
+        // resultEntry.onclick = "focusOnResult(" + element.resultID + ")";
+        resultEntry.value = element.resultID;
+        resultEntry.classList.add("focus-button");
+        resultEntry.innerText = element.offset;
+        resultsEl.appendChild(resultEntry);
+      });
+    }
   });
 }
 
+
+function focusOnResult(tabs, resultID) {
+  browser.tabs.sendMessage(tabs[0].id, {
+    command: "focus-on-result",
+    resultID: resultID
+  });
+}
 
 /**
  * There was an error executing the script.
