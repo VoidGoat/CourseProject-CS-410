@@ -10,8 +10,28 @@
     "activeTab"
   ],
   "browser_action": {
-    "default_icon": "icons/beasts-32.png",
+    "default_icon": "icons/icon-48.png",
     "default_title": "Flexible Find",
     "default_popup": "popup/search_bar.html"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "css": [
+        "content_scripts/content.css"
+      ],
+      "js": [
+        "content_scripts/fuzzyset.js",
+        "content_scripts/find.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    "content_scripts/wordnet-js/lib/wordnet-file.js",
+    "content_scripts/wordnet-js/lib/data-file.js",
+    "content_scripts/wordnet-js/lib/index-file.js",
+    "content_scripts/wordnet-js/lib/wordnet.js"
+  ]
 }

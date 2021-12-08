@@ -5,3 +5,13 @@ html, body {
 .hidden {
   display: none;
 }
+
+
+#results {
+  max-height: 300px;
+  overflow-y: scroll;
+}
+
+#results button {
+  display: block;
+}

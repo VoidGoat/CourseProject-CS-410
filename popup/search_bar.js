@@ -10,6 +10,7 @@ function listenForClicks() {
      */
     function sendFindRequest(tabs) {
 
+        clearResults();
         browser.tabs.sendMessage(tabs[0].id, {
           command: "find",
           findQuery: document.getElementById("search-bar").value
@@ -23,9 +24,13 @@ function listenForClicks() {
      * send a "reset" message to the content script in the active tab.
      */
     function reset(tabs) {
+      clearResults();
+
       browser.tabs.sendMessage(tabs[0].id, {
         command: "reset",
       });
+
+
     }
 
     /**
@@ -73,13 +78,23 @@ function listenForClicks() {
         // resultEntry.onclick = "focusOnResult(" + element.resultID + ")";
         resultEntry.value = element.resultID;
         resultEntry.classList.add("focus-button");
-        resultEntry.innerText = element.offset;
+        resultEntry.innerText = element.resultID + " score = " + element.score.toFixed(2) + ": " + element.text;
         resultsEl.appendChild(resultEntry);
       });
     }
   });
 }
 
+
+// Clears all data from the results div
+function clearResults() {
+      // Remove all child buttons from results
+      const resultsDiv = document.getElementById("results");
+      while (resultsDiv.children.length > 0) {
+        resultsDiv.removeChild(resultsDiv.firstChild);
+      }
+
+}
 
 function focusOnResult(tabs, resultID) {
   browser.tabs.sendMessage(tabs[0].id, {
@@ -95,7 +110,7 @@ function focusOnResult(tabs, resultID) {
 function reportExecuteScriptError(error) {
   document.querySelector("#popup-content").classList.add("hidden");
   document.querySelector("#error-content").classList.remove("hidden");
-  console.error(`Failed to execute beastify content script: ${error.message}`);
+  console.error(`Failed to execute content script: ${error.message}`);
 }
 
 
@@ -104,6 +119,29 @@ function reportExecuteScriptError(error) {
  * and add a click handler.
  * If we couldn't inject the script, handle the error.
  */
-browser.tabs.executeScript({file: "/content_scripts/find.js"})
-.then(listenForClicks)
-.catch(reportExecuteScriptError);
+listenForClicks();
+// browser.tabs.executeScript({file: "content_scripts/fuzzyset.js"})
+// // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/wordnet-file.js"})
+// // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/data-file.js"}) 
+// // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/index-file.js"}) 
+// // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/wordnet.js"}) 
+// .then( () => { browser.tabs.executeScript({file: "content_scripts/find.js"})
+// .then(listenForClicks)
+// .catch(reportExecuteScriptError);}).catch(reportExecuteScriptError);
+// })
+// })
+// })
+// });
+        // "content_scripts/fuzzyset.js",
+        // "content_scripts/wordnet-js/lib/wordnet-file.js",
+        // "content_scripts/wordnet-js/lib/data-file.js",
+        // "content_scripts/wordnet-js/lib/index-file.js",
+        // "content_scripts/wordnet-js/lib/wordnet.js",
+        // "content_scripts/find.js"})
+
+  // "background": {
+  //   "scripts": [
+  //     "content_scripts/require.js"
+  //   ]
+  // }
+
