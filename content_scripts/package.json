@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "brfs": "^2.0.2",
+    "browserify-fs": "^1.0.0"
+  }
+}

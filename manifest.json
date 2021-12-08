@@ -27,11 +27,5 @@
         "content_scripts/find.js"
       ]
     }
-  ],
-  "web_accessible_resources": [
-    "content_scripts/wordnet-js/lib/wordnet-file.js",
-    "content_scripts/wordnet-js/lib/data-file.js",
-    "content_scripts/wordnet-js/lib/index-file.js",
-    "content_scripts/wordnet-js/lib/wordnet.js"
   ]
 }

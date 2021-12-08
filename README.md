@@ -14,6 +14,6 @@ The progress report is in `ProgressReport.pdf`
 # Citations
 Using fuzzyset.js from https://github.com/Glench/fuzzyset.js for approximate string matching
 
-Using wordnet in JS from https://github.com/morungos/wordnet
+Using wordnet in JS from https://github.com/nlp-compromise/wordnet.js
 
 and the wordnet data is from: Princeton University "About WordNet." WordNet. Princeton University. 2010. https://wordnet.princeton.edu/

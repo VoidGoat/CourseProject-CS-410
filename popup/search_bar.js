@@ -119,7 +119,11 @@ function reportExecuteScriptError(error) {
  * and add a click handler.
  * If we couldn't inject the script, handle the error.
  */
+
 listenForClicks();
+
+
+
 // browser.tabs.executeScript({file: "content_scripts/fuzzyset.js"})
 // // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/wordnet-file.js"})
 // // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/data-file.js"}) 
@@ -145,3 +149,8 @@ listenForClicks();
   //   ]
   // }
 
+
+    //   "content_scripts/wordnet-js/lib/wordnet-file.js",
+    // "content_scripts/wordnet-js/lib/data-file.js",
+    // "content_scripts/wordnet-js/lib/index-file.js",
+    // "content_scripts/wordnet-js/lib/wordnet.js"

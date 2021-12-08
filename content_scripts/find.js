@@ -9,18 +9,13 @@
   }
   window.hasRun = true;
 
-  // const requireScript = document.createElement('script');
-  // requireScript.setAttribute("src", browser.runtime.getURL('content_scripts/require.js'));
-  // const head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
-  // head.insertBefore(requireScript, head.lastChild);
 
   // // insert wordnet script
-  const script = document.createElement('script');
-  script.setAttribute("type", "module");
-  script.setAttribute("src", browser.runtime.getURL('content_scripts/wordnet-js/lib/wordnet.js'));
-  const head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
-  head.insertBefore(script, head.lastChild);
-
+  // const script = document.createElement('script');
+  // script.setAttribute("type", "module");
+  // script.setAttribute("src", browser.runtime.getURL('content_scripts/wordnet-js/lib/wordnet.js'));
+  // const head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
+  // head.insertBefore(script, head.lastChild);
 
 
   // Array to store all highlight elements
@@ -33,7 +28,10 @@
     console.log("query received: " + query);
 
 
-    // let wn = new WordNet();
+    // import WordNet
+    let wn = require("./wordnetjson/index.js");
+    console.log(wn.lookup(query));
+
 
     // Clear results before doing anything else
     clearResults();
