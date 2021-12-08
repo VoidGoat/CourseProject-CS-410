@@ -29,8 +29,8 @@
 
 
     // import WordNet
-    let wn = require("./wordnetjson/index.js");
-    console.log(wn.lookup(query));
+    // let wn = require("./wordnetjson/index.js");
+    // console.log(wn.lookup(query));
 
 
     // Clear results before doing anything else
@@ -42,8 +42,6 @@
       return;
     }
 
-    let fuzzySet = FuzzySet();
-    fuzzySet.add(query);
 
     // Get all text nodes on the page
     const allTextNodes = textNodesUnder(document.body);
@@ -128,6 +126,7 @@
     //   }
     // }
 
+    // Send results to popup
     browser.runtime.sendMessage({
       command: "receive-results",
       results: results 
@@ -135,6 +134,13 @@
 
   }
 
+  /**
+   * Removes control characters and extra spaces from strings
+   */
+  function cleanupString(text) {
+    // remove control characters and the extra spaces
+    return text.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").replace(/\s\s+/g, ' ');
+  }
   // Does fuzzy search for a query over a string of text and returns all matches over a certain threshold
   function fuzzySearch(text, query, threshold) {
     // Using FuzzySet implementation from https://github.com/Glench/fuzzyset.js
@@ -144,21 +150,27 @@
     // Array to store similarities of all subsections
     let similarities = [];
 
-    // Remove invisible chars
-    // text = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-
     // iterate over all possible words in the text
     for (let offset = 0; offset <= text.length - query.length; offset++) {
-      
 
+      // Increase length to account for blank 
       let extraLength = 0;
-      // while (offset + query.length + extraLength < text.length && text.slice(offset, offset + query.length + extraLength).replace(/[\u0000-\u001F\u007F-\u009F]/gi, "").length < query.length) {
-      //   extraLength += 1;
-      // }
+      let cleanedLength = cleanupString(text.slice(offset, offset + query.length + extraLength)).length;
+      while (offset + query.length + extraLength < text.length && cleanedLength < query.length) {
+        extraLength += query.length - cleanedLength;
+        cleanedLength = cleanupString(text.slice(offset, offset + query.length + extraLength)).length;
+      }
+
       // Get current slice of text
       let currentSlice = text.slice(offset, offset + query.length + extraLength);
 
-      // currentSlice = currentSlice.replace(/[\u0000-\u001F\u007F-\u009F]/gi, "");
+      // let charCodes = "";
+      // for (let k = 0; k < currentSlice.length; k++) {
+      //  charCodes += currentSlice.charCodeAt(k) + ' ';
+      // }
+      // console.log(charCodes);
+
+      currentSlice = cleanupString(currentSlice);
 
       // Get similarity between slice and query
       let fuzzScore = fuzzySet.get(currentSlice);
@@ -175,6 +187,8 @@
         // If current slice overlaps with previous then only add it if it has higher score
         // console.log(currentSlice);
         // console.log(currentSlice.length);
+        // console.log(currentSlice.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").length);
+
         const similarityResult = [currentSlice, similarity, offset, currentSlice.length + extraLength];
         if (similarities.length === 0) {
             similarities.push(similarityResult)
