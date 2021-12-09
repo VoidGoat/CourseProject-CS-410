@@ -7,14 +7,10 @@ setSearchMethod("fuzzy");
 function listenForClicks() {
   document.addEventListener("click", (e) => {
 
-    console.log("CLICKED!");
-    console.log("e.target.id " + e.target.id);
-    console.log("search bar text: " + document.getElementById("search-bar").value)
-
     /**
+     * Sends search bar text and search method to find.js
      */
     function sendFindRequest(tabs) {
-
         console.log("search type: " + searchMethod);
         clearResults();
         browser.tabs.sendMessage(tabs[0].id, {
@@ -61,7 +57,7 @@ function listenForClicks() {
     }
 
     else if (e.target.classList.contains("focus-button")) {
-      console.log("FOCUS BUTTON!" + e.target.value);
+      // console.log("FOCUS BUTTON!" + e.target.value);
       browser.tabs.query({active: true, currentWindow: true})
         .then((tabs) => focusOnResult(tabs, e.target.value))
         .catch(reportError);
@@ -78,11 +74,25 @@ function listenForClicks() {
 
   });
 
+  /**
+   * Receive messages from content_script
+   * Receive results and generate buttons accordingly
+   */
   browser.runtime.onMessage.addListener((message) => {
     if (message.command === "receive-results") {
-      console.log(message.results);
+      console.log(message);
 
       const resultsEl = document.getElementById("results");
+
+      // Display info if message contains it
+      if (message.info !== "") {
+        const infoEl = document.createElement('p');
+        infoEl.classList.add("message-info");
+        infoEl.innerText = message.info;
+
+        resultsEl.append(infoEl);
+
+      }
 
       // Add all results to section
       message.results.forEach(element => {

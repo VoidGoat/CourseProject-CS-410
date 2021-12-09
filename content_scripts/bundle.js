@@ -16,7 +16,7 @@
 
 
   // Maximum number of related words that should be searched for
-  const maxRelatedWords = 20;
+  const maxRelatedWords = 60;
 
   /**
    * Searches for a query in the page and sends results to popup 
@@ -62,12 +62,13 @@
           // Only add a certain amount of related words and do not add repeated words
           if (relatedWords.length < maxRelatedWords && !relatedWords.includes(currentResult.words[j])) {
             relatedWords.push(currentResult.words[j]);
-          } else {
+          } else if (relatedWords.length >= maxRelatedWords) {
             break;
           }
         }
       }
     }
+    console.log(relatedWords);
 
     // Get all text nodes on the page
     const allTextNodes = textNodesUnder(document.body);
@@ -129,11 +130,21 @@
       results = results.sort(function compareFn(firstEl, secondEl) { if (firstEl.score < secondEl.score) { return 1; } else { -1; } });
     }
 
+
+    // Determine what info to send to popup
+    let resultInfo = "";
+    if (method === "relational" && relatedWords.length === 0) {
+      resultInfo = "No related words found. Make sure your query is a single word";
+    } else if (results.length === 0) {
+      resultInfo = "No matches found in the webpage.";
+    }
+
     // Send results to popup
     browser.runtime.sendMessage({
       command: "receive-results",
       method: method,
-      results: results 
+      results: results,
+      info: resultInfo
     });
   }
 
@@ -149,7 +160,7 @@
   /**
    * Does fuzzy search for a query over a string of text and returns all matches over a certain threshold
    */
-  function fuzzySearch(text, query, threshold, lengthVariation = 1) {
+  function fuzzySearch(text, query, threshold, lengthVariation = 2) {
     // Using FuzzySet implementation from https://github.com/Glench/fuzzyset.js
     let fuzzySet = FuzzySet();
     fuzzySet.add(query);
@@ -161,7 +172,7 @@
     for (let offset = 0; offset <= text.length - query.length; offset++) {
 
       // Vary length of string to compare against query
-      for (let lengthDiff = lengthVariation; lengthDiff >= -lengthVariation; lengthDiff--) {
+      for (let lengthDiff = lengthVariation; lengthDiff >= Math.max(-lengthVariation, -query.length + 1); lengthDiff--) {
         // Increase length to account for blank characters
         let extraLength = 0;
         let cleanedLength = cleanupString(text.slice(offset, offset + query.length + extraLength + lengthDiff)).length;

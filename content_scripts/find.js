@@ -15,7 +15,7 @@
 
 
   // Maximum number of related words that should be searched for
-  const maxRelatedWords = 20;
+  const maxRelatedWords = 50;
 
   /**
    * Searches for a query in the page and sends results to popup 
@@ -43,7 +43,6 @@
 
     // Array to store related words to search for
     let relatedWords = [];
-    // relatedWords = ["compiler", "compilers"];
 
     // Get related words if using relational search
     if (method === "relational") {
@@ -61,12 +60,13 @@
           // Only add a certain amount of related words and do not add repeated words
           if (relatedWords.length < maxRelatedWords && !relatedWords.includes(currentResult.words[j])) {
             relatedWords.push(currentResult.words[j]);
-          } else {
+          } else if (relatedWords.length >= maxRelatedWords) {
             break;
           }
         }
       }
     }
+    console.log(relatedWords);
 
     // Get all text nodes on the page
     const allTextNodes = textNodesUnder(document.body);
@@ -76,21 +76,21 @@
 
     // Iterate over all nodes and search them
     for (let i = 0; i < allTextNodes.length; i++) {
-      // Check that parent element is visible
+      // Check that parent element is visible, Taken from: https://stackoverflow.com/questions/19669786/check-if-element-is-visible-in-dom
       let elem = allTextNodes[i].parentNode;
-      // Taken from: https://stackoverflow.com/questions/19669786/check-if-element-is-visible-in-dom
       if (!!!( elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length )) {
         // if parent element is not visible then do not process node
         continue;
       }
+
+      // Convert text to lowercase for easy matching
       let currentText = allTextNodes[i].textContent.toLowerCase();
 
       // Get search results with the given method
       let searchResults = [];
       if (method === "fuzzy") {
         searchResults = fuzzySearch(currentText, query, 0.45);
-      }
-      else if (method === "relational") {
+      } else if (method === "relational") {
         searchResults = relationalSearch(currentText, relatedWords);
       }
 
@@ -128,11 +128,21 @@
       results = results.sort(function compareFn(firstEl, secondEl) { if (firstEl.score < secondEl.score) { return 1; } else { -1; } });
     }
 
+
+    // Determine what info to send to popup
+    let resultInfo = "";
+    if (method === "relational" && relatedWords.length === 0) {
+      resultInfo = "No related words found. Make sure your query is a single word.";
+    } else if (results.length === 0) {
+      resultInfo = "No matches found in the webpage.";
+    }
+
     // Send results to popup
     browser.runtime.sendMessage({
       command: "receive-results",
       method: method,
-      results: results 
+      results: results,
+      info: resultInfo
     });
   }
 
@@ -141,14 +151,13 @@
    * Removes control characters and extra spaces from strings
    */
   function cleanupString(text) {
-    // remove control characters and the extra spaces
     return text.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").replace(/\s\s+/g, ' ');
   }
 
   /**
    * Does fuzzy search for a query over a string of text and returns all matches over a certain threshold
    */
-  function fuzzySearch(text, query, threshold, lengthVariation = 1) {
+  function fuzzySearch(text, query, threshold, lengthVariation = 2) {
     // Using FuzzySet implementation from https://github.com/Glench/fuzzyset.js
     let fuzzySet = FuzzySet();
     fuzzySet.add(query);
@@ -160,7 +169,7 @@
     for (let offset = 0; offset <= text.length - query.length; offset++) {
 
       // Vary length of string to compare against query
-      for (let lengthDiff = lengthVariation; lengthDiff >= -lengthVariation; lengthDiff--) {
+      for (let lengthDiff = lengthVariation; lengthDiff >= Math.max(-lengthVariation, -query.length + 1); lengthDiff--) {
         // Increase length to account for blank characters
         let extraLength = 0;
         let cleanedLength = cleanupString(text.slice(offset, offset + query.length + extraLength + lengthDiff)).length;
@@ -282,8 +291,10 @@
     return highlightNode;
   }
 
-  // taken from: https://stackoverflow.com/questions/10730309/find-all-text-nodes-in-html-page
-  // Gets all text nodes that are under an element
+  /** 
+   * Gets all text nodes that are under an element
+   * taken from: https://stackoverflow.com/questions/10730309/find-all-text-nodes-in-html-page
+   */
   function textNodesUnder(el){
     var n, a=[], walk=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null,false);
     while(n=walk.nextNode()) a.push(n);
@@ -301,27 +312,24 @@
 
   /**
    * Listen for messages from the background script.
-   * Call "insertBeast()" or "removeExistingBeasts()".
+   * And call the specified function 
    */
   browser.runtime.onMessage.addListener((message) => {
     if (message.command === "find") {
-      
       searchForQuery(message.findQuery, message.method);
-
     } else if (message.command === "reset") {
       clearResults();
     }
     else if (message.command === "focus-on-result") {
-
       // Remove previous focus highlight
       const previousFocus = document.getElementsByClassName("main-highlight");
       for (let i = 0; i < previousFocus.length; i++) {
         previousFocus[i].classList.remove("main-highlight");
       }
 
+      // Focus on new element
       currentHighlights[message.resultID].scrollIntoView({behavior: "smooth", block: "center"});
       currentHighlights[message.resultID].classList.add("main-highlight");
-
     }
   });
 
