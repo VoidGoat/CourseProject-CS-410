@@ -82,31 +82,26 @@ function listenForClicks() {
     if (message.command === "receive-results") {
       console.log(message.results);
 
-      if (true) {
-        const resultsEl = document.getElementById("results");
+      const resultsEl = document.getElementById("results");
 
-        // Add all results to section
-        message.results.forEach(element => {
-          const resultEntry = document.createElement("button");
-          resultEntry.classList.add("result-button");
-          // resultEntry.onclick = "focusOnResult(" + element.resultID + ")";
-          resultEntry.value = element.resultID;
-          resultEntry.classList.add("focus-button");
+      // Add all results to section
+      message.results.forEach(element => {
+        const resultEntry = document.createElement("button");
+        resultEntry.classList.add("result-button");
+        // resultEntry.onclick = "focusOnResult(" + element.resultID + ")";
+        resultEntry.value = element.resultID;
+        resultEntry.classList.add("focus-button");
 
-          resultEntry.innerText = element.resultID + ": " + element.text;
+        resultEntry.innerText = element.resultID + ": " + element.text;
 
-          const scoreEl = document.createElement('span');
-          scoreEl.append(document.createTextNode("score = " + element.score.toFixed(2)));
-          scoreEl.style.color = scoreToColor(element.score);
-          scoreEl.style.float = "right";
-          resultEntry.appendChild(scoreEl);
-          
-          resultsEl.appendChild(resultEntry);
-        });
-      }
-      else if (message.method === "relational") {
-
-      }
+        const scoreEl = document.createElement('span');
+        scoreEl.append(document.createTextNode("score = " + element.score.toFixed(2)));
+        scoreEl.style.color = scoreToColor(element.score);
+        scoreEl.style.float = "right";
+        resultEntry.appendChild(scoreEl);
+        
+        resultsEl.appendChild(resultEntry);
+      });
     }
   });
 }
@@ -178,36 +173,3 @@ function reportExecuteScriptError(error) {
  */
 
 listenForClicks();
-
-
-
-// browser.tabs.executeScript({file: "content_scripts/fuzzyset.js"})
-// // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/wordnet-file.js"})
-// // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/data-file.js"}) 
-// // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/index-file.js"}) 
-// // .then( () => {browser.tabs.executeScript({file: "content_scripts/wordnet-js/lib/wordnet.js"}) 
-// .then( () => { browser.tabs.executeScript({file: "content_scripts/find.js"})
-// .then(listenForClicks)
-// .catch(reportExecuteScriptError);}).catch(reportExecuteScriptError);
-// })
-// })
-// })
-// });
-        // "content_scripts/fuzzyset.js",
-        // "content_scripts/wordnet-js/lib/wordnet-file.js",
-        // "content_scripts/wordnet-js/lib/data-file.js",
-        // "content_scripts/wordnet-js/lib/index-file.js",
-        // "content_scripts/wordnet-js/lib/wordnet.js",
-        // "content_scripts/find.js"})
-
-  // "background": {
-  //   "scripts": [
-  //     "content_scripts/require.js"
-  //   ]
-  // }
-
-
-    //   "content_scripts/wordnet-js/lib/wordnet-file.js",
-    // "content_scripts/wordnet-js/lib/data-file.js",
-    // "content_scripts/wordnet-js/lib/index-file.js",
-    // "content_scripts/wordnet-js/lib/wordnet.js"

@@ -10,18 +10,11 @@
   window.hasRun = true;
 
 
-  // // insert wordnet script
-  // const script = document.createElement('script');
-  // script.setAttribute("type", "module");
-  // script.setAttribute("src", browser.runtime.getURL('content_scripts/wordnet-js/lib/wordnet.js'));
-  // const head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
-  // head.insertBefore(script, head.lastChild);
-
-
   // Array to store all highlight elements
   let currentHighlights = [];
 
 
+  // Maximum number of related words that should be searched for
   const maxRelatedWords = 20;
 
   /**
@@ -29,7 +22,6 @@
    */
   function searchForQuery(query, method) {
     console.log("query received: " + query);
-
     console.log("search method: " + method);
 
 
@@ -49,8 +41,10 @@
       return;
     }
 
+    // Array to store related words to search for
     let relatedWords = [];
     // relatedWords = ["compiler", "compilers"];
+
     // Get related words if using relational search
     if (method === "relational") {
       console.log("gathering related words");
@@ -64,7 +58,7 @@
       for (let i = 0; i < wordnetResults.length; i++) {
         let currentResult = wordnetResults[i];
         for (let j = 0; j < currentResult.words.length; j++) {
-          // Only add a certain amount of related words and do not repeated words
+          // Only add a certain amount of related words and do not add repeated words
           if (relatedWords.length < maxRelatedWords && !relatedWords.includes(currentResult.words[j])) {
             relatedWords.push(currentResult.words[j]);
           } else {
@@ -91,9 +85,10 @@
       }
       let currentText = allTextNodes[i].textContent.toLowerCase();
 
+      // Get search results with the given method
       let searchResults = [];
       if (method === "fuzzy") {
-        searchResults = fuzzySearch(currentText, query, 0.0);
+        searchResults = fuzzySearch(currentText, query, 0.45);
       }
       else if (method === "relational") {
         searchResults = relationalSearch(currentText, relatedWords);
@@ -103,6 +98,7 @@
       // Array of ranges that should be highlighted
       let rangesToHighlight = [];
 
+      // Create ranges for all results and save results
       for (let resultIdx = 0; resultIdx < searchResults.length; resultIdx++) {
         let searchResult = searchResults[resultIdx];
         let foundText = searchResult[0];
@@ -127,50 +123,10 @@
 
     }
 
-    // Sort results array
-    results = results.sort(function compareFn(firstEl, secondEl) { if (firstEl.score < secondEl.score) { return 1; } else { -1; } });
-
-
-    
-    // Iterate over text nodes to find query
-    // for (let i = 0; i < allTextNodes.length; i++) {
-    //   let currentText = allTextNodes[i].textContent.toLowerCase();
-
-    //   // let searchIndex = currentText.search(query);
-    //   let searchIndex = fuzzySearch(currentText, query);
-
-    //   let currentTextOffset = 0;
-
-    //   let rangesToHighlight = [];
-
-    //   while (searchIndex !== -1) {
-    //     console.log(currentText);
-    //     console.log(searchIndex);
-    //     console.log(currentTextOffset);
-
-    //     let newRange = document.createRange();
-    //     newRange.setStart(allTextNodes[i], currentTextOffset + searchIndex);
-    //     newRange.setEnd(allTextNodes[i], currentTextOffset + searchIndex + query.length);    
-    //     rangesToHighlight.push(newRange);
-
-    //     if (searchIndex + query.length >= currentText.length) {
-    //       break;
-    //     }
-    //     currentTextOffset += searchIndex + query.length;
-    //     currentText = currentText.slice(searchIndex + query.length);
-
-    //     // searchIndex = currentText.search(query);
-    //    searchIndex = fuzzySearch(currentText, query);
-
-    //   }
-
-    //   for (let j = 0; j < rangesToHighlight.length; j++) {
-    //     const newHighlight = highlightRange(rangesToHighlight[j]);
-    //     currentHighlights.push(newHighlight);
-
-    //     results.push({nodeIndex: i, offset: currentTextOffset + searchIndex, resultID: results.length, text: query});
-    //   }
-    // }
+    // Sort results array if using fuzzy search
+    if (method === "fuzzy") {
+      results = results.sort(function compareFn(firstEl, secondEl) { if (firstEl.score < secondEl.score) { return 1; } else { -1; } });
+    }
 
     // Send results to popup
     browser.runtime.sendMessage({
@@ -216,12 +172,7 @@
         // Get current slice of text
         let currentSlice = text.slice(offset, offset + query.length + extraLength + lengthDiff);
   
-        // let charCodes = "";
-        // for (let k = 0; k < currentSlice.length; k++) {
-        //  charCodes += currentSlice.charCodeAt(k) + ' ';
-        // }
-        // console.log(charCodes);
-  
+        // Remove control chars
         currentSlice = cleanupString(currentSlice);
   
         // Get similarity between slice and query
@@ -236,12 +187,10 @@
   
         // If similarity score passes threshold then save this result
         if (similarity > threshold) {
-          // If current slice overlaps with previous then only add it if it has higher score
-          // console.log(currentSlice);
-          // console.log(currentSlice.length);
-          // console.log(currentSlice.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").length);
-  
+
           const similarityResult = [currentSlice, similarity, offset, currentSlice.length + extraLength];
+
+          // If current slice overlaps with previous then only add it if it has higher score
           if (similarities.length === 0) {
               similarities.push(similarityResult)
           } else if (similarities[similarities.length - 1][2] + similarities[similarities.length - 1][3] <= offset) {
@@ -250,8 +199,6 @@
             // Replace previous result if new result has a higher score
             similarities[similarities.length - 1] = similarityResult;
           }
-          // offset += currentSlice.length;
-
         }
       }
     }
@@ -267,38 +214,17 @@
     // Array to store similarities of all subsections
     foundWords = [];
 
-
-    // for (let i = 0; i < relatedWords.length; i++) {
-    //   let currentWord = relatedWords[i];
-    //   let currentText = text;
-    //   let currentTextOffset = 0;
-    //   let searchIndex = currentText.search(currentWord);
-
-    //   while (searchIndex !== -1) {
-    //     // Save found word
-    //     const foundWord = [currentWord, 1.0, searchIndex + currentTextOffset, currentWord.length];
-    //     foundWords.push(foundWord);
-
-    //     currentTextOffset += searchIndex + currentWord.length;
-    //     currentText = currentText.slice(searchIndex + currentWord.length);
-
-    //     searchIndex = currentText.search(currentWord);
-    //   }
-    // }
-
-
     let currentText = text;
-
     let closestSearchIndex = -1;
     let closestWord = '';
     let currentTextOffset = 0;
 
+    // Find the first related word and then remove all the text upto the end of that word, save the word then repeat the process on new text
     do {
       closestSearchIndex = -1;
       closestWord = '';
       for (let i = 0; i < relatedWords.length; i++) {
         let currentWord = relatedWords[i];
-        // console.log(currentWord);
         let currentSearchIndex = currentText.search(currentWord);
         
         if ((closestSearchIndex === -1 && currentSearchIndex !== -1) || (currentSearchIndex < closestSearchIndex && currentSearchIndex !== -1)) {
@@ -316,8 +242,6 @@
       }
 
     } while (closestSearchIndex !== -1 ) 
-
-
 
     return foundWords;
   }
@@ -340,6 +264,7 @@
       parent.normalize();
     }
   }
+
   // Highlight all the text inside a Range
   function highlightRange(textRange) {
     const highlightNode = document.createElement("span");
@@ -365,7 +290,6 @@
     return a;
   }
 
-
   /**
    * Reset
    */
@@ -389,14 +313,13 @@
     }
     else if (message.command === "focus-on-result") {
 
+      // Remove previous focus highlight
       const previousFocus = document.getElementsByClassName("main-highlight");
       for (let i = 0; i < previousFocus.length; i++) {
         previousFocus[i].classList.remove("main-highlight");
-
       }
 
       currentHighlights[message.resultID].scrollIntoView({behavior: "smooth", block: "center"});
-      // currentHighlights[message.resultID].style.backgroundColor = "red";
       currentHighlights[message.resultID].classList.add("main-highlight");
 
     }

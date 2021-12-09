@@ -1,3 +1,4 @@
+// Taken from: https://github.com/Glench/fuzzyset.js
 var FuzzySet = (function () {
   'use strict';
 
