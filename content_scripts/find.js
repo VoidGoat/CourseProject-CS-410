@@ -21,6 +21,9 @@
   // Array to store all highlight elements
   let currentHighlights = [];
 
+
+  const maxRelatedWords = 20;
+
   /**
    * Searches for a query in the page and sends results to popup 
    */
@@ -47,16 +50,28 @@
     }
 
     let relatedWords = [];
+    // relatedWords = ["compiler", "compilers"];
     // Get related words if using relational search
     if (method === "relational") {
       console.log("gathering related words");
       // import WordNet
 
-      // let wn = require("./wordnetjson/index.js");
-      // console.log(wn.lookup(query));
-      // let relatedWord = wn.lookup(query);
-      relatedWords = ["compiler", "exam"];
-
+      let wn = require("./wordnetjson/index.js");
+      let wordnetResults = wn.lookup(query);
+      console.log(wordnetResults);
+      
+      // Collect all related words from the result
+      for (let i = 0; i < wordnetResults.length; i++) {
+        let currentResult = wordnetResults[i];
+        for (let j = 0; j < currentResult.words.length; j++) {
+          // Only add a certain amount of related words and do not repeated words
+          if (relatedWords.length < maxRelatedWords && !relatedWords.includes(currentResult.words[j])) {
+            relatedWords.push(currentResult.words[j]);
+          } else {
+            break;
+          }
+        }
+      }
     }
 
     // Get all text nodes on the page
@@ -253,23 +268,56 @@
     foundWords = [];
 
 
-    for (let i = 0; i < relatedWords.length; i++) {
-      let currentWord = relatedWords[i];
-      let currentText = text;
-      let currentTextOffset = 0;
-      let searchIndex = currentText.search(currentWord);
+    // for (let i = 0; i < relatedWords.length; i++) {
+    //   let currentWord = relatedWords[i];
+    //   let currentText = text;
+    //   let currentTextOffset = 0;
+    //   let searchIndex = currentText.search(currentWord);
 
-      while (searchIndex !== -1) {
-        // Save found word
-        const foundWord = [currentWord, 1.0, searchIndex + currentTextOffset, currentWord.length];
-        foundWords.push(foundWord);
+    //   while (searchIndex !== -1) {
+    //     // Save found word
+    //     const foundWord = [currentWord, 1.0, searchIndex + currentTextOffset, currentWord.length];
+    //     foundWords.push(foundWord);
 
-        currentTextOffset += searchIndex + currentWord.length;
-        currentText = currentText.slice(searchIndex + currentWord.length);
+    //     currentTextOffset += searchIndex + currentWord.length;
+    //     currentText = currentText.slice(searchIndex + currentWord.length);
 
-        searchIndex = currentText.search(currentWord);
+    //     searchIndex = currentText.search(currentWord);
+    //   }
+    // }
+
+
+    let currentText = text;
+
+    let closestSearchIndex = -1;
+    let closestWord = '';
+    let currentTextOffset = 0;
+
+    do {
+      closestSearchIndex = -1;
+      closestWord = '';
+      for (let i = 0; i < relatedWords.length; i++) {
+        let currentWord = relatedWords[i];
+        // console.log(currentWord);
+        let currentSearchIndex = currentText.search(currentWord);
+        
+        if ((closestSearchIndex === -1 && currentSearchIndex !== -1) || (currentSearchIndex < closestSearchIndex && currentSearchIndex !== -1)) {
+          closestSearchIndex = currentSearchIndex;
+          closestWord = currentWord;
+        }
       }
-    }
+      if (closestSearchIndex !== -1 && closestWord !== '') {
+        // Save found word
+        const foundWord = [closestWord, 1.0, closestSearchIndex + currentTextOffset, closestWord.length];
+        foundWords.push(foundWord);
+  
+        currentTextOffset += closestSearchIndex + closestWord.length;
+        currentText = currentText.slice(closestSearchIndex + closestWord.length);
+      }
+
+    } while (closestSearchIndex !== -1 ) 
+
+
 
     return foundWords;
   }

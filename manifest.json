@@ -24,7 +24,7 @@
       ],
       "js": [
         "content_scripts/fuzzyset.js",
-        "content_scripts/find.js"
+        "content_scripts/bundle.js"
       ]
     }
   ]
