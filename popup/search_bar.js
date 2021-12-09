@@ -1,18 +1,25 @@
+// variable to keep track of current search method
+searchMethod = "fuzzy";
+
+// Set the initial method
+setSearchMethod("fuzzy");
+
 function listenForClicks() {
   document.addEventListener("click", (e) => {
 
     console.log("CLICKED!");
-    console.log("e.target.id" + e.target.id);
-    console.log(document.getElementById("search-bar"));
-    console.log("search bar text:" + document.getElementById("search-bar").value)
+    console.log("e.target.id " + e.target.id);
+    console.log("search bar text: " + document.getElementById("search-bar").value)
 
     /**
      */
     function sendFindRequest(tabs) {
 
+        console.log("search type: " + searchMethod);
         clearResults();
         browser.tabs.sendMessage(tabs[0].id, {
           command: "find",
+          method: searchMethod,
           findQuery: document.getElementById("search-bar").value
         }).then(() => {
           console.log("query complete");
@@ -25,12 +32,9 @@ function listenForClicks() {
      */
     function reset(tabs) {
       clearResults();
-
       browser.tabs.sendMessage(tabs[0].id, {
         command: "reset",
       });
-
-
     }
 
     /**
@@ -42,7 +46,7 @@ function listenForClicks() {
 
     /**
      * Get the active tab,
-     * then call "sendFindRequest()" or "reset()" as appropriate.
+     * then call the approriate function
      */
     if (e.target.id === "search-button") {
       browser.tabs.query({active: true, currentWindow: true})
@@ -62,27 +66,80 @@ function listenForClicks() {
         .then((tabs) => focusOnResult(tabs, e.target.value))
         .catch(reportError);
     }
+    else if (e.target.id === "fuzzy-button") {
+      console.log("Switching to Fuzzy search!");
+      setSearchMethod("fuzzy");
+
+    }
+    else if (e.target.id === "relational-button") {
+      console.log("Switching to Relational search!");
+      setSearchMethod("relational");
+    }
 
   });
 
   browser.runtime.onMessage.addListener((message) => {
-    console.log("NEW MESSAGE!")
-
     if (message.command === "receive-results") {
       console.log(message.results);
-      const resultsEl = document.getElementById("results");
 
-      // Add all results to section
-      message.results.forEach(element => {
-        const resultEntry = document.createElement("button");
-        // resultEntry.onclick = "focusOnResult(" + element.resultID + ")";
-        resultEntry.value = element.resultID;
-        resultEntry.classList.add("focus-button");
-        resultEntry.innerText = element.resultID + " score = " + element.score.toFixed(2) + ": " + element.text;
-        resultsEl.appendChild(resultEntry);
-      });
+      if (true) {
+        const resultsEl = document.getElementById("results");
+
+        // Add all results to section
+        message.results.forEach(element => {
+          const resultEntry = document.createElement("button");
+          resultEntry.classList.add("result-button");
+          // resultEntry.onclick = "focusOnResult(" + element.resultID + ")";
+          resultEntry.value = element.resultID;
+          resultEntry.classList.add("focus-button");
+
+          resultEntry.innerText = element.resultID + ": " + element.text;
+
+          const scoreEl = document.createElement('span');
+          scoreEl.append(document.createTextNode("score = " + element.score.toFixed(2)));
+          scoreEl.style.color = scoreToColor(element.score);
+          scoreEl.style.float = "right";
+          resultEntry.appendChild(scoreEl);
+          
+          resultsEl.appendChild(resultEntry);
+        });
+      }
+      else if (message.method === "relational") {
+
+      }
     }
   });
+}
+
+/**
+ * Converts a float from 0.0-1.0 to an rgb color
+ */
+function scoreToColor(score) {
+  // scale colors darker a bit
+  score *= 0.8;
+
+  // Calculate red and green components
+  const green = (score * 255).toFixed();
+  const red = ((1.0 - score) * 255).toFixed();
+
+  return "rgb(" + red + ", " + green + ", 0)";
+}
+
+
+/**
+ * Switches between fuzzy and relational search
+ */
+function setSearchMethod(newMethod) {
+  if (newMethod === "fuzzy") {
+    searchMethod = "fuzzy";
+    document.getElementById("fuzzy-button").classList.add("selected-button");
+    document.getElementById("relational-button").classList.remove("selected-button");
+  } else if (newMethod === "relational") {
+    searchMethod = "relational";
+    document.getElementById("fuzzy-button").classList.remove("selected-button");
+    document.getElementById("relational-button").classList.add("selected-button");
+
+  }
 }
 
 

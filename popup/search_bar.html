@@ -10,11 +10,18 @@
 <body noautohide="true">
   <div id="popup-content">
     <div class="search-container">
+
+      <div style="width: 60%; margin: auto; margin-bottom: 10px;">
+        <button class="ui-button" id="fuzzy-button">Fuzzy Find</button>
+        <button class="ui-button" id="relational-button" style="float: right">Relational Search</button>
+      </div>
+
       <form action="">
         <input type="text" id="search-bar" placeholder="Search..." name="search">
       </form>
-      <button id="search-button">Search</button>
-      <button id="clear-button">Clear Results</button>
+      <button class="ui-button" id="search-button">Search</button>
+      <button class="ui-button" id="clear-button" style="float: right;">Clear Results</button>
+
 
       <div id="results"></div>
     </div>
