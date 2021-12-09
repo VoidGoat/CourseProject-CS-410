@@ -4,7 +4,7 @@ This final project is a Firefox browser extension that allows for a more flexibl
 
 The documentation is in `Documentation.pdf`
 
-The Software Usage Tutorial is at this link: `#`
+The Software Usage Tutorial is at this link: [https://www.youtube.com/watch?v=y879CxwUx7w](https://www.youtube.com/watch?v=y879CxwUx7w)
 
 The proposal is in `ProjectProposal.pdf`
 
